@@ -1,2 +1,2 @@
 import perlin from 'perlin-noise';
-console.log(perlin.generatePerlinNoise(480, 480))
+const noise = perlin.generatePerlinNoise(480, 480)
