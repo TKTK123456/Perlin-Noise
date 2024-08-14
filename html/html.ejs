@@ -1,5 +1,6 @@
 <title>Perlin noise</title>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src='perlin.js'></script>
 <style>
 .centerbox {
   /* flexbox, por favor */
@@ -29,61 +30,64 @@ body {
 }
 </style>
 <div class='centerbox'><canvas></canvas></div>
+<button onclick="render(canvas.width, canvas.height)">Render 2D</button>
+<div class='centerbox'><canvas></canvas></div>
 <script>
-async function Noise(x, y, z, d) {
-  const body = {
-    d: d,
-    x: x,
-    y: y,
-    z: z,
-  }
-  const noise = await $.post("/noise", body)
-  return noise
-}
 var canvas = document.getElementsByTagName('canvas')[0];
 canvas.width = parseInt('<%= canvasWidth %>');
 canvas.height = parseInt('<%= canvasHeight %>');
+var can2 = document.getElementsByTagName('canvas')[1];
+var ctx2 = can2.getContext('2d');
 
+var image2 = ctx2.createImageData(canvas.width, canvas.height);
+var data2 = image2.data;
 var ctx = canvas.getContext('2d');
 
 var image = ctx.createImageData(canvas.width, canvas.height);
 var data = image.data;
-async function render(d) {
-var start = Date.now();
-if (d==2) {
-const noise = await Promise.resolve(Noise(canvas.width, canvas.height, 0, d)).then((value) => {
-    return value
-  })
-for (var x = 0; x < canvas.width; x++) {
-  for (var y = 0; y < canvas.height; y++) {
-    var value = noise[x+y*(canvas.width)]
-    value *= 256;
-    var cell = (x + y * canvas.width) * 4;
-    data[cell] = data[cell + 1] = data[cell + 2] = value;
-    data[cell] += Math.max(0, (25 - value) * 8);
-    data[cell + 3] = 255; // alpha.
+async function render(w,h) {
+  const GRID_SIZE = 4;
+  const RESOLUTION = 128;
+  const COLOR_SCALE = 250;
+
+  let pixel_size = ((w+h)/2) / RESOLUTION;
+  let num_pixels = GRID_SIZE / RESOLUTION;
+
+  for (let y = 0; y < GRID_SIZE; y += num_pixels / GRID_SIZE){
+      for (let x = 0; x < GRID_SIZE; x += num_pixels / GRID_SIZE){
+          let v = parseInt(perlin.get(x, y) * COLOR_SCALE);
+          ctx.fillStyle = 'hsl('+v+',50%,50%)';
+          ctx.fillRect(
+              x / GRID_SIZE * w,
+              y / GRID_SIZE * h,
+              pixel_size,
+              pixel_size
+          );
+      }
   }
+  await render2(w, h)
+  perlin.seed()
 }
-}
-/* // Benchmark code.
-start = Date.now();
-for (var x = 0; x < 10000; x++) {
-  for (var y = 0; y < 10000; y++) {
-    noise.simplex2(x / 50, y/50);
+async function render2(w, h) {
+  const GRID_SIZE = 4;
+  const RESOLUTION = 128;
+  const COLOR_SCALE = 250;
+
+  let pixel_size = ((w+h)/2) / RESOLUTION;
+  let num_pixels = GRID_SIZE / RESOLUTION;
+
+  for (let y = 0; y < GRID_SIZE; y += num_pixels / GRID_SIZE){
+      for (let x = 0; x < GRID_SIZE; x += num_pixels / GRID_SIZE){
+          let v = parseInt(perlin.get(x, y) * COLOR_SCALE);
+          ctx2.fillStyle = 'hsl('+v+',50%,50%)';
+          ctx2.fillRect(
+              x / GRID_SIZE * w,
+              y / GRID_SIZE * h,
+              pixel_size,
+              pixel_size
+          );
+      }
   }
-}*/
-var end = Date.now();
-ctx.fillRect(0, 0, 100, 100);
-ctx.putImageData(image, 0, 0);
-
-
-ctx.font = '16px sans-serif'
-ctx.textAlign = 'center';
-ctx.fillText('Rendered in ' + (end - start) + ' ms', canvas.width / 2, canvas.height - 20);
-
-if(console) {
-  console.log('Rendered in ' + (end - start) + ' ms');
-}
+  
 }
 </script>
-<button onclick="render(2)">Render 2D</button>
