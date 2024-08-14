@@ -13,13 +13,6 @@ app.use(express.static(__dirname + "/html"));
 app.listen(8080, () => {
   console.log("Server is up!");
 });
-(async function () {
-  const listener = await ngrok.forward({
-    addr: 8080,
-    authtoken_from_env: true,
-  });
-  console.log(`Ingress established at: ${listener.url()}/`);
-})();
 const width = 1000;
 const height = 700;
 async function getNoise2D(w, h) {
